@@ -1,0 +1,141 @@
+package com.example.management;
+
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+
+import java.io.File;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    SQLiteDatabase sqliteDB ;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        sqliteDB = init_database();
+        init_tables();
+        load_values();
+
+        Button registerButton = (Button) findViewById(R.id.registerButton);
+        registerButton.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public  void onClick(View v) {
+                save_values() ;
+            }
+        });
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        EditText idText = (EditText) findViewById(R.id.idText);
+        EditText passwordText = (EditText) findViewById(R.id.passwordText);
+        EditText nameText = (EditText) findViewById(R.id.nameText);
+        EditText ageText = (EditText) findViewById(R.id.ageText);
+    }
+
+    private void save_values() {
+        if (sqliteDB != null) {
+
+            // delete
+            sqliteDB.execSQL("DELETE FROM CONTACT_T") ;
+
+            EditText idText = (EditText) findViewById(R.id.idText);
+            String id = idText.getText().toString() ;
+
+            EditText passwordText = (EditText) findViewById(R.id.passwordText);
+            String password = passwordText.getText().toString() ;
+
+            EditText nameText = (EditText) findViewById(R.id.nameText);
+            String name = nameText.getText().toString() ;
+
+            EditText ageText = (EditText) findViewById(R.id.ageText);
+            String age = ageText.getText().toString() ;
+            int no = 0 ;
+            if (age != null && !age.isEmpty()) {
+                no = Integer.parseInt(age) ;
+            }
+
+            String sqlInsert = "INSERT INTO CONTACT_T " +
+                    "(ID, PASSWORD, NAME, AGE) VALUES (" +
+                    id + "'," +
+                    "'" + password + "'," +
+                    "'" + name + "'," +
+                    Integer.toString(Integer.parseInt(age)) + "," ;
+
+            System.out.println(sqlInsert) ;
+            sqliteDB.execSQL(sqlInsert) ;
+        }
+    }
+
+    private void load_values() {
+        if (sqliteDB != null) {
+            String sqlQueryTbl = "SELECT * FROM CONTACT_T" ;
+            Cursor cursor = null ;
+
+            // 쿼리 실행
+            cursor = sqliteDB.rawQuery(sqlQueryTbl, null) ;
+
+            if (cursor.moveToNext()) { // 레코드가 존재한다면,
+
+                // id (TEXT) 값 가져오기
+                String id = cursor.getString(0) ;
+                EditText idText = (EditText) findViewById(R.id.idText);
+                idText.setText(id) ;
+
+                // password (TEXT) 값 가져오기
+                String password = cursor.getString(1) ;
+                EditText passwordText = (EditText) findViewById(R.id.passwordText);
+                passwordText.setText(password) ;
+
+                // name (TEXT) 값 가져오기
+                String name = cursor.getString(2) ;
+                EditText nameText = (EditText) findViewById(R.id.nameText);
+                nameText.setText(name) ;
+
+                // age (INTEGER) 값 가져오기.
+                int age = cursor.getInt(3) ;
+                EditText ageText = (EditText) findViewById(R.id.ageText);
+                ageText.setText(Integer.toString(age)) ;
+
+            }
+        }
+    }
+
+
+    private void init_tables() {
+
+        if (sqliteDB != null) {
+            String sqlCreateTbl = "CREATE TABLE IF NOT EXISTS CONTACT_T (" +
+                    "NO " + "INTEGER NOT NULL," +
+                    "NAME " + "TEXT," +
+                    "PHONE " + "TEXT," +
+                    "OVER20 " + "INTEGER" + ")" ;
+            System.out.println(sqlCreateTbl) ;
+            sqliteDB.execSQL(sqlCreateTbl) ;
+        }
+    }
+
+    private SQLiteDatabase init_database() {
+        SQLiteDatabase db = null ;
+        File file = new File(getFilesDir(), "contact.db");
+
+        System.out.println("PATH : " + file.toString());
+        try {
+            db = SQLiteDatabase.openOrCreateDatabase(file, null) ;
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+
+        if (db == null) {
+            System.out.println("DB creation failed." + file.getAbsolutePath()) ;
+        }
+
+        return db ;
+    }
+}
